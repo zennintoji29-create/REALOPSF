@@ -79,7 +79,6 @@ useEffect(() => {
 
   initAuth()
 }, [])
-
 const login = async (email: string, password: string) => {
   try {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -96,21 +95,20 @@ const login = async (email: string, password: string) => {
       throw new Error(data.message || "Login failed")
     }
 
-    // ✅ extract user properly
-    const user = data.user
+    // ✅ BACKEND RETURNS FLAT USER
+    const user = {
+      _id: data._id,
+      name: data.name,
+      email: data.email,
+      role: data.role,
+    }
 
     setToken(data.token)
-    setUser({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    })
+    setUser(user)
 
     localStorage.setItem("token", data.token)
     localStorage.setItem("user", JSON.stringify(user))
 
-    // Redirect based on role
     if (user.role === "admin") {
       router.push("/admin")
     } else if (user.role === "teacher") {
@@ -123,6 +121,7 @@ const login = async (email: string, password: string) => {
     throw error
   }
 }
+
 const register = async (userData: RegisterData) => {
   try {
     const response = await fetch(`${API_URL}/auth/register`, {
