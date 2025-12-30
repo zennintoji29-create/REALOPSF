@@ -43,17 +43,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"
 
-  useEffect(() => {
-    // Check if user is logged in
+useEffect(() => {
+  const initAuth = async () => {
     const storedToken = localStorage.getItem("token")
-    const storedUser = localStorage.getItem("user")
 
-    if (storedToken && storedUser) {
-      setToken(storedToken)
-      setUser(JSON.parse(storedUser))
+    if (!storedToken) {
+      setIsLoading(false)
+      return
     }
-    setIsLoading(false)
-  }, [])
+
+    try {
+      const res = await fetch(`${API_URL}/auth/me`, {
+        headers: {
+          Authorization: `Bearer ${storedToken}`,
+        },
+      })
+
+      if (!res.ok) throw new Error("Invalid token")
+
+      const userData = await res.json()
+
+      setToken(storedToken)
+      setUser(userData)
+
+      localStorage.setItem("user", JSON.stringify(userData))
+    } catch {
+      localStorage.removeItem("token")
+      localStorage.removeItem("user")
+      setToken(null)
+      setUser(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  initAuth()
+}, [])
+
 
   const login = async (email: string, password: string) => {
     try {
