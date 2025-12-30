@@ -80,55 +80,50 @@ useEffect(() => {
   initAuth()
 }, [])
 
+const login = async (email: string, password: string) => {
+  try {
+    const response = await fetch(`${API_URL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    })
 
-  const login = async (email: string, password: string) => {
-    try {
-      const response = await fetch(`${API_URL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
-      })
+    const data = await response.json()
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || "Login failed")
-      }
-
-      setToken(data.token)
-      setUser({
-        _id: data._id,
-        name: data.name,
-        email: data.email,
-        role: data.role,
-      })
-
-      localStorage.setItem("token", data.token)
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          _id: data._id,
-          name: data.name,
-          email: data.email,
-          role: data.role,
-        }),
-      )
-
-      // Redirect based on role
-      if (data.role === "admin") {
-        router.push("/admin")
-      } else if (data.role === "teacher") {
-        router.push("/teacher")
-      } else {
-        router.push("/student")
-      }
-    } catch (error) {
-      console.error("Login error:", error)
-      throw error
+    if (!response.ok) {
+      throw new Error(data.message || "Login failed")
     }
+
+    // ✅ extract user properly
+    const user = data.user
+
+    setToken(data.token)
+    setUser({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    })
+
+    localStorage.setItem("token", data.token)
+    localStorage.setItem("user", JSON.stringify(user))
+
+    // Redirect based on role
+    if (user.role === "admin") {
+      router.push("/admin")
+    } else if (user.role === "teacher") {
+      router.push("/teacher")
+    } else {
+      router.push("/student")
+    }
+  } catch (error) {
+    console.error("Login error:", error)
+    throw error
   }
+}
+
 const register = async (userData: RegisterData) => {
   try {
     const response = await fetch(`${API_URL}/auth/register`, {
